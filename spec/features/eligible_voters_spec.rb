@@ -22,6 +22,7 @@ RSpec.feature "Eligible voters csv" do
   let!(:delegate_who_is_also_team_leader) { create(:delegate, :wrc_leader) }
   let!(:board_member) { create(:user, :board_member) }
   let!(:officer) { create(:secretary_role) }
+  let!(:regional_delegate_role) { create(:regional_delegate_role) }
 
   # See https://github.com/rails/rails/pull/33829 to find about the crazy UTF-8 mangled filenames in Content-Disposition
   # (Spoiler: This is actually proper RFC that has been implemented only in Rails 6. Looks ugly but for browsers it's a good feature!)
@@ -50,6 +51,16 @@ RSpec.feature "Eligible voters csv" do
                                                       ["password", delegate_who_is_also_team_leader.id.to_s, delegate_who_is_also_team_leader.email, delegate_who_is_also_team_leader.name],
                                                       ["password", senior_delegate_role.user.id.to_s, senior_delegate_role.user.email, senior_delegate_role.user.name])
       # "password" does not refer to actual passwords. They are related to a voter type that must be specified
+    end
+  end
+
+  describe "regional voters" do
+  it "includes only regional delegates with active user roles" do
+    visit "/admin/regional-voters.csv"
+
+    expect(page.response_headers['Content-Disposition']).to eq 'attachment; filename="regional-wca-voters-2016-05-05T10%3A05%3A03Z.csv"; filename*=UTF-8\'\'regional-wca-voters-2016-05-05T10%3A05%3A03Z.csv'
+
+    expect(CSV.parse(page.body)).to contain_exactly(["password", regional_delegate_role.user.id.to_s, regional_delegate_role.user.email, regional_delegate_role.user.name])
     end
   end
 end
